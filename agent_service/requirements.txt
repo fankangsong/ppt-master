@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+openai
+sse-starlette
+python-dotenv

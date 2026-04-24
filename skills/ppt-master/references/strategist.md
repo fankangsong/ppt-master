@@ -184,9 +184,9 @@ Built-in library contains 6700+ icons across three libraries:
 
 > **Ramp discipline, not a fixed menu.** Every size in the deck is derived from the `body` baseline as a ratio. The `spec_lock.md typography` block declares `body` as the anchor plus whichever common slots this deck actually uses (`title` / `subtitle` / `annotation` by default; add `cover_title` / `hero_number` / `chart_annotation` etc. when the content calls for them). Executor may use intermediate sizes during generation as long as the size's ratio to `body` lands within the corresponding role's band below — the list is a ramp, not an allowed-values enumeration.
 
-Selection principle: Baseline choice is driven by **content density**, not design style.
+Selection principle: Baseline choice is driven by **content density**, not design style. `18px` and `24px` are the two most commonly used values — any other integer baseline is fine as long as it is reasonable for the content (e.g., 16px for chart-heavy pages, 20 / 22px for medium density, 28–32px for poster / cover-like decks with very little text). The ratio bands apply to whatever `body` the deck declares.
 
-| Content Density | Points per Page | Body Baseline | Suitable Scenarios |
+| Common recommendation | Points per Page | Body Baseline | Suitable Scenarios |
 |----------------|----------------|---------------|-------------------|
 | Relaxed | 3-5 items | 24px | Keynote-style, training materials |
 | Dense | 6+ items | 18px | Data reports, consulting analysis |
@@ -202,6 +202,8 @@ Selection principle: Baseline choice is driven by **content density**, not desig
 | Annotation / caption | 0.7-0.85x | 17-20px | 13-15px |
 | Page number / footnote | 0.5-0.65x | 12-16px | 9-12px |
 
+> Columns show two commonly recommended baselines only for illustration. For any other baseline — 16, 20, 22, 28, 32 … — multiply each row's ratio against that value to derive this deck's actual bands. The checker's `_check_spec_lock_drift` reads the live `body` value from `spec_lock.md` and applies ratio bands on top, so no code change is needed to support a different baseline.
+>
 > Executor may pick any px value within a role's band (e.g., 40px hero number, 13px chart annotation, 72px cover headline) without having to pre-declare every intermediate value in `spec_lock.md`. Values outside **every** band remain forbidden — those need the lock extended first.
 
 ### h. Image Usage Confirmation
@@ -282,12 +284,12 @@ Core logic (side-by-side only): the container's aspect ratio must closely match 
 
 When content outline pages involve **data visualization or infographic-style structured information design** (comparisons, trends, proportions, KPIs, flows, timelines, org structures, strategic frameworks, etc.), Strategist should select appropriate visualization types from the built-in template library.
 
-> **Mandatory first step**: At the beginning of content planning, **read the full `templates/charts/charts_index.json`** file. This index contains all available visualization templates (52 types across 8 categories), including each template's `summary`, `bestFor`, `avoidFor`, and `keywords`. Strategist must internalize the full catalog before making selections — do NOT rely on memory or partial lists.
+> **Mandatory first step**: At the beginning of content planning, **read the full `templates/charts/charts_index.json`** file. This index contains all available visualization templates (57 types across 9 categories), including each template's `summary`, `bestFor`, `avoidFor`, and `keywords`. Strategist must internalize the full catalog before making selections — do NOT rely on memory or partial lists.
 
 > **Selection workflow**:
 > 1. Read and internalize the complete `templates/charts/charts_index.json`
 > 2. For each page in the content outline, determine whether it needs visualization based on its information structure
-> 3. Match page content against the `bestFor` / `avoidFor` / `keywords` fields across all 52 templates to find the best fit
+> 3. Match page content against the `bestFor` / `avoidFor` / `keywords` fields across all 57 templates to find the best fit
 > 4. Use `quickLookup` as a secondary cross-reference when multiple candidates seem suitable
 > 5. List all selected visualizations in Design Spec **section VII (Visualization Reference List)** as a centralized reference; in section IX Content Outline, each page only needs to note the visualization type name
 >

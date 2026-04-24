@@ -25,6 +25,8 @@ The following features are **absolutely forbidden** when generating SVGs — PPT
 > **`marker-start` / `marker-end` is conditionally allowed** — see §1.1 for constraints. The converter maps qualifying markers to native DrawingML `<a:headEnd>` / `<a:tailEnd>`.
 >
 > **`clipPath` on `<image>` is conditionally allowed** — see §1.2 for constraints. The converter maps qualifying clip shapes to native DrawingML picture geometry (`<a:prstGeom>` or `<a:custGeom>`).
+>
+> **Replacing `<mask>` effects** — DrawingML has no continuous per-pixel alpha channel, so `<mask>` cannot be mapped. Route by effect type: image gradient overlays (vignette, fade, tint) → stacked `<rect>` with `<linearGradient>` / `<radialGradient>` (see §6 Image Overlay); non-rectangular image crop (circle, rounded, hexagon) → `clipPath` on `<image>` (see §1.2); inner glow / soft-edge → `<filter>` with `<feGaussianBlur>` (see §6 Glow Effect); drop shadow → filter shadow or layered rect (see §6 Shadow). Effects requiring true pixel-level alpha — text-knockout image fills, arbitrary alpha composites — have no PPT-side path and MUST be baked into the source image at the Image_Generator stage.
 
 ---
 
@@ -172,7 +174,7 @@ The following features are **absolutely forbidden** when generating SVGs — PPT
 - **viewBox** must match the canvas dimensions (`width`/`height` must match `viewBox`)
 - **Background**: Use `<rect>` to define the page background color
 - **Line breaks**: Use `<tspan>` for manual line breaks; `<foreignObject>` is FORBIDDEN
-- **Fonts**: Use system fonts only (Microsoft YaHei, Arial, Calibri, etc.); `@font-face` is FORBIDDEN
+- **Fonts**: Every `font-family` stack MUST end with a cross-platform pre-installed family (Microsoft YaHei / SimSun / Arial / Times New Roman / Consolas / etc.); `@font-face` is FORBIDDEN. See [`strategist.md §g — PPT-safe font discipline`](strategist.md) for the full HARD rule and seed combinations.
 - **Styles**: Use inline styles only (`fill="..."` `font-size="..."`); `<style>` / `class` are FORBIDDEN (`id` inside `<defs>` is legitimate)
 - **Colors**: Use HEX values; for transparency use `fill-opacity` / `stroke-opacity`
 - **Image references**: `<image href="../images/xxx.png" preserveAspectRatio="xMidYMid slice"/>`

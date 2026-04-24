@@ -85,7 +85,8 @@ Before drawing each page, look up its entry in `page_rhythm` (key format `P<NN>`
 - **Generation rhythm**: First lock the global design context, then generate pages sequentially one by one in the same continuous context; grouped page batches (for example, 5 pages at a time) are not allowed
 - **Phased batch generation** (recommended):
   1. **Visual Construction Phase**: Generate all SVG pages continuously in sequential page order, ensuring high consistency in design style and layout coordinates (Visual Consistency)
-  2. **Logic Construction Phase**: After all SVGs are finalized, batch-generate speaker notes to ensure narrative coherence (Narrative Continuity)
+  2. **Quality Check Gate** (mandatory between phases): run `python3 scripts/svg_quality_checker.py <project_path>` against `svg_output/`. Any `error` (banned SVG features, viewBox mismatch, spec_lock color / font / size drift, non-PPT-safe font stack, etc.) MUST be fixed on the offending page before entering the Logic Construction Phase — re-generate that page and re-run the check. `warning` entries should be reviewed and fixed when straightforward; otherwise acknowledge and release. Do NOT defer this check to after `finalize_svg.py` — finalize rewrites SVG and some violations get masked.
+  3. **Logic Construction Phase**: After SVGs pass the quality gate, batch-generate speaker notes to ensure narrative coherence (Narrative Continuity)
 - **Technical specifications**: See [shared-standards.md](shared-standards.md) for SVG technical constraints and PPT compatibility rules
 - **Visual depth**: Use filter shadows, glow effects, gradient fills, dashed strokes, and gradient overlays from shared-standards.md to create layered depth — flat pages without elevation or emphasis look unfinished
 
@@ -183,7 +184,7 @@ When the Design Spec includes a **VII. Visualization Reference List**, read the 
 - **May adjust freely**: Visual composition, axis ranges, grid lines, legend position, spacing, decorative elements — creative freedom is encouraged as long as the chart remains accurate and readable
 - **Must NOT**: Change visualization type without Design Spec justification, or omit data points / structural elements specified in the outline
 
-> Visualization templates: `templates/charts/` (52 types). Index: `templates/charts/charts_index.json`
+> Visualization templates: `templates/charts/` (57 types). Index: `templates/charts/charts_index.json`
 
 ---
 
@@ -205,14 +206,11 @@ Handle images based on their status in the Design Specification's "Image Resourc
 
 ## 7. Font Usage
 
-Apply corresponding fonts for different text roles based on the font plan in the Design Specification & Content Outline:
+Font family per role is governed by `spec_lock.md typography` — that file is the source of truth. Read `font_family` as the default, plus any `*_family` override (`title_family` / `body_family` / `emphasis_family` / `code_family` / etc.); roles without an explicit override fall back to `font_family`.
 
-| Role | Chinese Recommended | English Recommended |
-|------|--------------------|--------------------|
-| Title font | Microsoft YaHei / KaiTi / SimHei | Arial / Georgia |
-| Body font | Microsoft YaHei / SimSun | Calibri / Times |
-| Emphasis font | SimHei | Arial Black / Consolas |
-| Annotation font | Microsoft YaHei / SimSun | Arial / Times |
+If `spec_lock.md` is absent for any reason, consult the seed combinations and PPT-safe discipline in [`strategist.md`](strategist.md) §g "Typography Plan Confirmation" rather than inventing a stack.
+
+**Hard rule — never violate**: every `font-family` stack emitted into SVG MUST end with a cross-platform pre-installed family (Microsoft YaHei / SimHei / SimSun / Arial / Calibri / Segoe UI / Times New Roman / Georgia / Consolas / Courier New / Impact / Arial Black). PPTX stores a single `typeface` per run with no runtime fallback — a missing font silently degrades to Calibri on the viewer's machine.
 
 ---
 

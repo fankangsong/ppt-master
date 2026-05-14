@@ -19,7 +19,7 @@ The `layouts/` directory contains pre-built page layout templates organized by d
 - **Academic Defense**: Academic defense style, research-oriented
 
 - **Human browsing**: [layouts/README.md](./layouts/README.md)
-- **Slim lookup (opt-in)**: [layouts/layouts_index.json](./layouts/layouts_index.json) — only consulted when the user explicitly opts into the template flow
+- **Slim lookup (discovery only)**: [layouts/layouts_index.json](./layouts/layouts_index.json) — used to answer "what templates exist?". Step 3 triggers on an explicit directory path supplied by the user, not on names from this index.
 
 ## Visualization Templates
 
@@ -38,18 +38,20 @@ The `charts/` directory contains 57 standardized visualization templates. For ba
 - Org Chart
 - Layered Architecture / Module Composition / Hub with Described Spokes / Pipeline with Stages / Client-Server Flow
 
-- **Human browsing**: [charts/README.md](./charts/README.md)
-- **AI / Programmatic lookup**: [charts/charts_index.json](./charts/charts_index.json)
+- **Library index (single source of truth)**: [charts/charts_index.json](./charts/charts_index.json)
+- **Directory overview**: [charts/README.md](./charts/README.md)
 
 ## Icon Library
 
-The `icons/` directory contains 6700+ vector icons across three active libraries:
+The `icons/` directory contains 11,600+ vector icons across five libraries:
 
 | Library | Style | Count |
 |---------|-------|-------|
-| `chunk` | fill / straight-line geometry | 640 |
-| `tabler-filled` | fill / solid | 1000+ |
+| `chunk-filled` | fill / straight-line geometry | 640 |
+| `tabler-filled` | fill / bezier-curve forms | 1000+ |
 | `tabler-outline` | stroke / line | 5000+ |
+| `phosphor-duotone` | duotone / single color + 0.2 opacity backplate | 1200+ |
+| `simple-icons` | brand logos (company / product marks) | 3400+ |
 
 - **Usage & style rules**: [icons/README.md](./icons/README.md)
 - **Search icons**: `ls skills/ppt-master/templates/icons/<library>/ | grep <keyword>`

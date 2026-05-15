@@ -127,21 +127,129 @@ class Orchestrator:
         生成“会话总结”事件（session_summary）。
         在所有步骤完成后，向前端发送最终的项目路径及生成的 PPTX 构件信息。
         """
-        pptx_path = os.path.join(context["project_path"], f"{context['project_name']}.pptx")
+        exports_dir = os.path.join(context["project_path"], "exports")
+        pptx_files = []
+        if os.path.exists(exports_dir):
+            pptx_files = [f for f in os.listdir(exports_dir) if f.endswith('.pptx')]
+        
+        pptx_path = os.path.join(exports_dir, pptx_files[0]) if pptx_files else ""
+        
+        svg_dir = os.path.join(context["project_path"], "svg_output")
+        svg_count = len([f for f in os.listdir(svg_dir)]) if os.path.exists(svg_dir) else 0
+        
         summary = (
             f"已完成 7 个步骤，项目目录：{context['project_path']}。"
-            f"{'已生成 PPTX 文件。' if os.path.exists(pptx_path) else 'PPTX 生成脚本已执行。'}"
+            f"生成了 {svg_count} 个SVG页面。"
+            f"{'已生成 PPTX 文件。' if pptx_path else 'PPTX 生成脚本已执行。'}"
         )
+        
+        artifacts = [
+            {"label": "项目目录", "path": context["project_path"], "type": "directory"},
+            {"label": f"SVG页面 ({svg_count}个)", "path": svg_dir, "type": "directory"},
+        ]
+        
+        if pptx_path:
+            artifacts.append({"label": "PPTX 文件", "path": pptx_path, "type": "file"})
+            
+        spec_path = os.path.join(context["project_path"], "spec_lock.md")
+        if os.path.exists(spec_path):
+            artifacts.append({"label": "执行契约", "path": spec_path, "type": "file"})
+        
         return await self._yield_event(
             "session_summary",
             summary,
             session_id=session_id,
             title="完成总结",
             summary=summary,
-            artifacts=[
-                {"label": "项目目录", "path": context["project_path"]},
-                {"label": "PPTX 文件", "path": pptx_path},
-            ],
+            artifacts=artifacts,
+        )
+
+    async def _yield_artifact_event(
+        self,
+        session_id: str,
+        artifact_type: str,
+        path: str,
+        metadata: Dict[str, Any] = None
+    ) -> str:
+        """
+        生成“产物通知”事件（artifact）。
+        当某个具体文件或资源生成完成时通知前端。
+        
+        参数：
+        - artifact_type: 产物类型 (svg_page, pptx_file, design_spec, image, notes)
+        - path: 文件或目录的绝对路径
+        - metadata: 额外的元数据信息（如页码、标题、文件大小等）
+        """
+        file_size = None
+        if os.path.exists(path) and os.path.isfile(path):
+            file_size = os.path.getsize(path)
+            
+        return await self._yield_event(
+            "artifact",
+            f"产物生成: {os.path.basename(path)}",
+            session_id=session_id,
+            artifact_type=artifact_type,
+            path=path,
+            filename=os.path.basename(path),
+            file_size=file_size,
+            metadata=metadata or {},
+        )
+
+    async def _yield_error_event(
+        self,
+        session_id: str,
+        code: int,
+        message: str,
+        details: str = None,
+        step_id: str = None
+    ) -> str:
+        """
+        生成“错误信息”事件（error）。
+        当发生可恢复或不可恢复的错误时通知前端。
+        
+        参数：
+        - code: 错误代码 (1=LLM错误, 2=脚本错误, 3=文件系统错误, 4=超时错误)
+        - message: 用户友好的错误描述
+        - details: 技术细节（堆栈信息等）
+        - step_id: 发生错误的步骤ID（可选）
+        """
+        return await self._yield_event(
+            "error",
+            message,
+            session_id=session_id,
+            code=code,
+            message=message,
+            details=details,
+            step_id=step_id,
+        )
+
+    async def _yield_progress_event(
+        self,
+        session_id: str,
+        step_id: str,
+        current: int,
+        total: int,
+        message: str = ""
+    ) -> str:
+        """
+        生成“进度更新”事件（progress）。
+        用于细粒度的进度反馈（如第几页/共几页）。
+        
+        参数：
+        - current: 当前进度值
+        - total: 总量
+        - message: 进度描述文本
+        """
+        percentage = int((current / total) * 100) if total > 0 else 0
+        
+        return await self._yield_event(
+            "progress",
+            message or f"进度: {current}/{total} ({percentage}%)",
+            session_id=session_id,
+            step_id=step_id,
+            current=current,
+            total=total,
+            percentage=percentage,
         )
 
     async def _run_tool(self, tool_func, *args, **kwargs) -> tuple[int, str, str]:
@@ -296,38 +404,74 @@ class Orchestrator:
                 yield await self._yield_event("trace", "Step 5: Image generation (skipped for now)...")
                 yield await self._yield_step_event(session_id, "step_5_image", 5, "图像生成", "完成")
     
-                # Step 6: Executor
+                # Step 6: Executor (Enhanced with page-level progress tracking)
                 self.session_manager.update_state(session_id, AgentState.STEP_6_EXECUTOR)
                 yield await self._yield_event("state", AgentState.STEP_6_EXECUTOR.value)
                 yield await self._yield_step_event(session_id, "step_6_executor", 6, "执行排版", "开始")
                 yield await self._yield_step_event(session_id, "step_6_executor", 6, "执行排版", "思考")
                 
                 yield await self._yield_event("trace", "Step 6: Executor generating SVG content...")
+                yield await self._yield_event("message", "\n\n**🎨 开始生成SVG页面...**\n\n", step_id="step_6_executor")
                 
-                # Read spec_lock.md
+                # Read spec_lock.md and send as artifact
                 spec_path = os.path.join(context["project_path"], "spec_lock.md")
                 if os.path.exists(spec_path):
                     with open(spec_path, "r", encoding="utf-8") as f:
                         spec_content = f.read()
+                    yield await self._yield_artifact_event(
+                        session_id, "design_spec", spec_path,
+                        {"description": "执行契约文件（设计规格）"}
+                    )
                 else:
                     spec_content = "No spec_lock.md found."
-    
+                    yield await self._yield_error_event(
+                        session_id, 3, "未找到spec_lock.md文件",
+                        details=f"Expected at: {spec_path}",
+                        step_id="step_6_executor"
+                    )
+
                 prompt = (
                     "You are an expert SVG presentation generator. Convert the following PPT outline into a single markdown file containing SVG code blocks for each slide. "
                     "Use the format:\n"
                     "## Slide 1\n```svg\n<svg>...</svg>\n```\n\n"
+                    "## Slide 2\n```svg\n<svg>...</svg>\n```\n\n"
+                    "IMPORTANT: Generate ALL slides in sequence. Each slide must be wrapped in ## Slide N heading followed by a ```svg code block.\n\n"
                     f"Outline:\n{spec_content}"
                 )
                 messages = [{"role": "user", "content": prompt}]
                 
                 full_reply = ""
                 yield await self._yield_step_event(session_id, "step_6_executor", 6, "执行排版", "执行")
+                
+                svg_buffer = ""
+                current_slide_num = 0
+                total_chars = 0
+                
                 async for chunk in self.llm_client.chat_completion_stream(messages):
-                    # Yield progress to trace so we know it's not frozen
-                    if len(full_reply) % 500 == 0 and len(full_reply) > 0:
-                        yield await self._yield_event("trace", f"Generating SVG... ({len(full_reply)} chars)")
                     full_reply += chunk
+                    total_chars += len(chunk)
+                    svg_buffer += chunk
+                    
+                    # Yield chunk to frontend for real-time rendering
                     yield await self._yield_event("chunk", chunk, step_id="step_6_executor")
+                    
+                    # Progress tracking every 500 chars
+                    if total_chars % 500 == 0 and total_chars > 0:
+                        yield await self._yield_event("trace", f"Generating content... ({total_chars} chars received)")
+                    
+                    # Detect completion of individual SVG blocks for real-time artifacts
+                    # Look for closing ``` that indicates end of an SVG block
+                    if "```" in chunk and "<svg" in svg_buffer:
+                        # Check if we just closed an SVG block
+                        if svg_buffer.count("```") % 2 == 0 and "```svg" in svg_buffer:
+                            current_slide_num += 1
+                            yield await self._yield_progress_event(
+                                session_id, "step_6_executor",
+                                current_slide_num, 0,  # We don't know total yet
+                                f"检测到第 {current_slide_num} 个SVG代码块..."
+                            )
+                            # Reset buffer after detecting complete block
+                            svg_buffer = ""
                 
                 # Save total.md (contains only notes, SVGs stripped out)
                 import re
@@ -337,48 +481,176 @@ class Orchestrator:
                 with open(total_md_path, "w", encoding="utf-8") as f:
                     f.write(notes_only.strip())
                 
-                # Extract SVGs from full_reply and save them
+                # Send notes as artifact
+                yield await self._yield_artifact_event(
+                    session_id, "notes", total_md_path,
+                    {"description": "演讲者备注（合并版）"}
+                )
+                
+                # Extract SVGs from full_reply and save them individually
                 svg_blocks = re.findall(r"```svg\s*([\s\S]*?)\s*```", full_reply, re.IGNORECASE)
                 
                 svg_dir = os.path.join(context["project_path"], "svg_output")
                 os.makedirs(svg_dir, exist_ok=True)
                 
+                total_slides = len(svg_blocks)
+                yield await self._yield_event("trace", f"检测到 {total_slides} 个SVG页面，开始逐个保存...")
+                
                 for idx, svg_content in enumerate(svg_blocks, start=1):
-                    # Optional: clean up XML declaration if LLM added it, but usually cairosvg/svglib handle it
                     svg_filename = f"P{idx:02d}_slide.svg"
                     svg_path = os.path.join(svg_dir, svg_filename)
+                    
                     with open(svg_path, "w", encoding="utf-8") as f:
                         f.write(svg_content.strip())
+                    
+                    # Send artifact event immediately after each file is saved
+                    yield await self._yield_artifact_event(
+                        session_id, "svg_page", svg_path,
+                        {
+                            "page_number": idx,
+                            "page_title": f"第{idx}页",
+                            "slide_count": total_slides,
+                            "content_length": len(svg_content.strip())
+                        }
+                    )
+                    
+                    # Send progress event
+                    yield await self._yield_progress_event(
+                        session_id, "step_6_executor",
+                        idx, total_slides,
+                        f"已保存第 {idx}/{total_slides} 页: {svg_filename}"
+                    )
+                    
+                    yield await self._yield_event(
+                        "trace", 
+                        f"[{idx}/{total_slides}] Saved {svg_filename} ({len(svg_content.strip())} chars)"
+                    )
                 
-                yield await self._yield_event("trace", f"Extracted {len(svg_blocks)} SVGs to svg_output/ and saved total.md")
+                yield await self._yield_event("message", f"\n\n**✅ SVG生成完成！共 {total_slides} 页**\n\n")
+                yield await self._yield_event("trace", f"Extracted {total_slides} SVGs to svg_output/ and saved total.md")
                 yield await self._yield_step_event(session_id, "step_6_executor", 6, "执行排版", "完成")
     
-                # Step 7: Post-processing
+                # Step 7: Post-processing & Export (Enhanced with milestone detection)
                 self.session_manager.update_state(session_id, AgentState.STEP_7_POSTPROCESS)
                 yield await self._yield_event("state", AgentState.STEP_7_POSTPROCESS.value)
                 yield await self._yield_step_event(session_id, "step_7_postprocess", 7, "后处理导出", "开始")
                 yield await self._yield_step_event(session_id, "step_7_postprocess", 7, "后处理导出", "执行")
                 
                 yield await self._yield_event("trace", "Step 7: Post-processing (splitting MD, finalize SVG, generate PPTX)...")
+                yield await self._yield_event("message", "\n\n**📦 开始后处理与导出...**\n\n", step_id="step_7_postprocess")
                 
-                # We use the new async streaming tool to stream stdout/stderr
-                yield await self._yield_event("trace", ">>> Running split_md...")
+                # Sub-step 7.1: Split markdown notes
+                yield await self._yield_progress_event(
+                    session_id, "step_7_postprocess", 0, 3,
+                    "子步骤 1/3: 拆分演讲者备注..."
+                )
+                yield await self._yield_event("trace", ">>> [1/3] Running total_md_split.py...")
+                split_md_success = True
                 async for line in ppt_tools.run_script_stream_async("total_md_split.py", [context["project_path"]]):
-                    yield await self._yield_event("trace", line)
-                    
-                yield await self._yield_event("trace", ">>> Running finalize_svg...")
+                    yield await self._yield_event("trace", f"  {line}")
+                    # Detect errors in output
+                    if "error" in line.lower() or "failed" in line.lower() or "traceback" in line.lower():
+                        split_md_success = False
+                
+                if not split_md_success:
+                    yield await self._yield_error_event(
+                        session_id, 2, "拆分备注时出现错误",
+                        details="Check trace logs for details",
+                        step_id="step_7_postprocess"
+                    )
+                
+                # Sub-step 7.2: Finalize SVG (post-process)
+                yield await self._yield_progress_event(
+                    session_id, "step_7_postprocess", 1, 3,
+                    "子步骤 2/3: SVG后处理（图标嵌入、图像优化）..."
+                )
+                yield await self._yield_event("trace", ">>> [2/3] Running finalize_svg.py...")
+                finalize_success = True
                 async for line in ppt_tools.run_script_stream_async("finalize_svg.py", [context["project_path"]]):
-                    yield await self._yield_event("trace", line)
-                    
-                yield await self._yield_event("trace", ">>> Running generate_pptx...")
+                    yield await self._yield_event("trace", f"  {line}")
+                    # Parse key milestones from finalize_svg output
+                    if "embedding icons" in line.lower():
+                        yield await self._yield_event("message", "  🔧 正在嵌入图标...", step_id="step_7_postprocess")
+                    elif "processing images" in line.lower():
+                        yield await self._yield_event("message", "  🖼️ 正在处理图像...", step_id="step_7_postprocess")
+                    elif "flattening text" in line.lower():
+                        yield await self._yield_event("message", "  📝 正在展平文本...", step_id="step_7_postprocess")
+                    elif "error" in line.lower() or "failed" in line.lower():
+                        finalize_success = False
+                
+                if finalize_success:
+                    # Send finalized SVG directory as artifact
+                    svg_final_dir = os.path.join(context["project_path"], "svg_final")
+                    if os.path.exists(svg_final_dir):
+                        yield await self._yield_artifact_event(
+                            session_id, "svg_final", svg_final_dir,
+                            {"description": "后处理后的SVG文件"}
+                        )
+                
+                # Sub-step 7.3: Generate PPTX
+                yield await self._yield_progress_event(
+                    session_id, "step_7_postprocess", 2, 3,
+                    "子步骤 3/3: 导出PPTX文件..."
+                )
+                yield await self._yield_event("trace", ">>> [3/3] Running svg_to_pptx.py...")
+                yield await self._yield_event("message", "  📄 正在生成PPTX文件，请稍候...", step_id="step_7_postprocess")
+                
+                pptx_generated = False
                 async for line in ppt_tools.run_script_stream_async("svg_to_pptx.py", [context["project_path"]]):
-                    yield await self._yield_event("trace", line)
+                    yield await self._yield_event("trace", f"  {line}")
+                    
+                    # Parse key milestones from svg_to_pptx output
+                    line_lower = line.lower()
+                    if "slide" in line_lower and ("export" in line_lower or "convert" in line_lower):
+                        import re
+                        slide_match = re.search(r'slide\s*(\d+)', line_lower)
+                        if slide_match:
+                            slide_num = int(slide_match.group(1))
+                            yield await self._yield_progress_event(
+                                session_id, "step_7_postprocess",
+                                slide_num, 0,  # Unknown total
+                                f"正在导出第 {slide_num} 页..."
+                            )
+                    
+                    if "output" in line_lower and ".pptx" in line_lower:
+                        yield await self._yield_event("message", "  ✅ PPTX文件已生成！", step_id="step_7_postprocess")
+                        pptx_generated = True
+                    
+                    if "error" in line_lower or "failed" in line_lower:
+                        yield await self._yield_error_event(
+                            session_id, 2, "PPTX导出错误",
+                            details=line,
+                            step_id="step_7_postprocess"
+                        )
+                
+                # Final progress update
+                yield await self._yield_progress_event(
+                    session_id, "step_7_postprocess", 3, 3,
+                    "后处理完成！"
+                )
+                
+                # Check for generated PPTX file and send artifact
+                exports_dir = os.path.join(context["project_path"], "exports")
+                if os.path.exists(exports_dir):
+                    pptx_files = [f for f in os.listdir(exports_dir) if f.endswith('.pptx')]
+                    if pptx_files:
+                        pptx_path = os.path.join(exports_dir, pptx_files[0])
+                        yield await self._yield_artifact_event(
+                            session_id, "pptx_file", pptx_path,
+                            {
+                                "description": "最终生成的演示文稿",
+                                "filename": pptx_files[0]
+                            }
+                        )
+                        pptx_generated = True
+                
+                completion_msg = "**✅ PPT生成完成！**" if pptx_generated else "**⚠️ PPT生成完成（部分产物可能缺失）**"
                 yield await self._yield_step_event(session_id, "step_7_postprocess", 7, "后处理导出", "完成")
                 
                 self.session_manager.update_state(session_id, AgentState.DONE)
                 yield await self._yield_event("state", AgentState.DONE.value)
                 yield await self._yield_summary_event(session_id, context)
-                yield await self._yield_event("message", f"**PPT Generation complete!**\n\nYou can find your files in `{context['project_path']}`")
+                yield await self._yield_event("message", f"{completion_msg}\n\n📁 所有文件已保存至: `{context['project_path']}`")
                 return
     
             else:
@@ -389,5 +661,9 @@ class Orchestrator:
             print(f"Error in orchestrator:\n{tb_str}")
             self.session_manager.update_state(session_id, AgentState.ERROR)
             yield await self._yield_event("state", AgentState.ERROR.value)
-            yield await self._yield_event("message", f"\n\n**Error Occurred:** {str(e)}")
+            yield await self._yield_error_event(
+                session_id, 0, f"系统错误: {str(e)}",
+                details=tb_str
+            )
+            yield await self._yield_event("message", f"\n\n**❌ Error Occurred:** {str(e)}")
             yield await self._yield_event("trace", f"Exception trace:\n{tb_str}")

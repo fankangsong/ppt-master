@@ -116,8 +116,10 @@ let isGenerating = false;
 let abortController = null;
 let planCardElement = null;
 let summaryCardElement = null;
+let artifactListElement = null;
 const stepCardMap = new Map();
 const stepContentMap = new Map();
+const artifactList = [];
 
 const STEP_STATUS_ORDER = ["开始", "思考", "计划", "执行", "完成"];
 const STEP_STATUS_ICON = {
@@ -348,8 +350,10 @@ function scrollToBottom() {
 function resetFlowCards() {
   planCardElement = null;
   summaryCardElement = null;
+  artifactListElement = null;
   stepCardMap.clear();
   stepContentMap.clear();
+  artifactList.length = 0;
 }
 
 /**
@@ -407,6 +411,176 @@ function upsertPlanCard(data) {
     )
     .join("");
   scrollToBottom();
+}
+
+/**
+ * 更新或插入"产物列表"卡片（对应 artifact 事件）。
+ * 实时展示生成的文件和资源。
+ */
+function upsertArtifactCard(data) {
+  if (!artifactListElement) {
+    artifactListElement = appendFlowCardContainer();
+    artifactListElement.dataset.cardType = "artifact";
+    artifactListElement.innerHTML = `
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                <div class="text-xs font-semibold uppercase tracking-wider text-amber-700 flex items-center gap-2">
+                    <span>📦 生成产物</span>
+                    <span id="artifact-count" class="bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full text-xs">0</span>
+                </div>
+                <div id="artifact-list" class="mt-3 space-y-2"></div>
+            </div>
+        `;
+  }
+  
+  // Add to artifact list if not already present
+  const existingIndex = artifactList.findIndex(a => a.path === data.path);
+  if (existingIndex === -1) {
+    artifactList.push(data);
+  }
+  
+  // Update count
+  const countEl = artifactListElement.querySelector("#artifact-count");
+  if (countEl) {
+    countEl.textContent = artifactList.length;
+  }
+  
+  // Render artifact list
+  const listEl = artifactListElement.querySelector("#artifact-list");
+  if (listEl) {
+    listEl.innerHTML = artifactList.map(artifact => {
+      const typeIcon = getArtifactTypeIcon(artifact.artifact_type);
+      const sizeText = artifact.file_size ? formatFileSize(artifact.file_size) : '';
+      const metaInfo = artifact.metadata ? 
+        Object.entries(artifact.metadata)
+          .filter(([k, v]) => v !== undefined && v !== null && k !== 'description')
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(' | ') : '';
+      
+      return `
+        <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-amber-200 hover:border-amber-400 transition-colors group">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="text-lg">${typeIcon}</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-medium text-gray-800 truncate" title="${escapeHtml(artifact.filename || artifact.path)}">
+                ${escapeHtml(artifact.filename || 'Unknown')}
+              </div>
+              ${metaInfo ? `<div class="text-xs text-gray-500 truncate">${escapeHtml(metaInfo)}</div>` : ''}
+            </div>
+          </div>
+          ${sizeText ? `<span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">${sizeText}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+  
+  scrollToBottom();
+}
+
+/**
+ * 获取产物类型对应的图标
+ */
+function getArtifactTypeIcon(type) {
+  const iconMap = {
+    'svg_page': '🎨',
+    'pptx_file': '📄',
+    'design_spec': '📋',
+    'notes': '📝',
+    'image': '🖼️',
+    'svg_final': '✨',
+    'directory': '📁',
+    'file': '📄',
+  };
+  return iconMap[type] || '📎';
+}
+
+/**
+ * 格式化文件大小
+ */
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let unitIndex = 0;
+  let size = bytes;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return `${size.toFixed(unitIndex > 0 ? 1 : 0)} ${units[unitIndex]}`;
+}
+
+/**
+ * 更新或插入"进度条"组件（对应 progress 事件）。
+ */
+function upsertProgressBar(data) {
+  let progressBar = document.getElementById(`progress-${data.step_id}`);
+  
+  if (!progressBar) {
+    // Find the step card and append progress bar to it
+    const stepCard = stepCardMap.get(data.step_id);
+    if (stepCard) {
+      const progressContainer = document.createElement("div");
+      progressContainer.id = `progress-${data.step_id}`;
+      progressContainer.className = "mt-3";
+      progressContainer.innerHTML = `
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs text-gray-500">进度</span>
+          <span class="text-xs font-medium text-blue-600 progress-percentage">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-300 progress-bar" style="width: 0%"></div>
+        </div>
+        <div class="text-xs text-gray-500 mt-1 progress-message"></div>
+      `;
+      
+      const contentWrapper = stepCard.querySelector(".step-content-wrapper");
+      if (contentWrapper) {
+        contentWrapper.classList.remove("hidden");
+        contentWrapper.appendChild(progressContainer);
+      }
+      
+      progressBar = progressContainer;
+    }
+  }
+  
+  if (progressBar) {
+    const bar = progressBar.querySelector(".progress-bar");
+    const percentage = progressBar.querySelector(".progress-percentage");
+    const message = progressBar.querySelector(".progress-message");
+    
+    if (bar) bar.style.width = `${data.percentage}%`;
+    if (percentage) percentage.textContent = `${data.percentage}%`;
+    if (message) message.textContent = data.message || '';
+  }
+}
+
+/**
+ * 显示错误通知（对应 error 事件）
+ */
+function showErrorNotification(data) {
+  // Create error toast notification
+  const errorDiv = document.createElement("div");
+  errorDiv.className = "max-w-3xl mx-auto w-full flow-card-wrapper";
+  errorDiv.innerHTML = `
+    <div class="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+      <div class="flex items-start gap-3">
+        <span class="text-xl">❌</span>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-red-800">发生错误</div>
+          <div class="text-sm text-red-700 mt-1">${escapeHtml(data.message || '未知错误')}</div>
+          ${data.details ? `<details class="mt-2"><summary class="text-xs text-red-600 cursor-pointer hover:text-red-800">查看技术详情</summary><pre class="text-xs text-red-600 mt-1 p-2 bg-red-100 rounded overflow-auto whitespace-pre-wrap">${escapeHtml(data.details)}</pre></details>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  chatContainer.appendChild(errorDiv);
+  scrollToBottom();
+  
+  // Also log to trace panel
+  appendTrace(`[ERROR] Code ${data.code}: ${data.message}`);
+  if (data.details) {
+    appendTrace(`[ERROR Details] ${data.details}`);
+  }
 }
 
 /**
@@ -870,6 +1044,22 @@ function handleServerEvent(data) {
     case "usage":
       tokenUsage.textContent = data.content;
       break;
+    case "artifact":
+      if (currentAiResponse) {
+        if (!currentAiResponse.artifacts) currentAiResponse.artifacts = [];
+        const existingIdx = currentAiResponse.artifacts.findIndex(a => a.path === data.path);
+        if (existingIdx === -1) {
+          currentAiResponse.artifacts.push(data);
+        }
+      }
+      upsertArtifactCard(data);
+      break;
+    case "progress":
+      upsertProgressBar(data);
+      break;
+    case "error":
+      showErrorNotification(data);
+      break;
     default:
       console.warn("Unknown event type:", data);
   }
@@ -908,5 +1098,13 @@ function restoreAssistantMessage(msg) {
 
   if (msg.summary) {
     upsertSummaryCard(msg.summary);
+  }
+
+  // Restore artifacts
+  if (msg.artifacts && Array.isArray(msg.artifacts) && msg.artifacts.length > 0) {
+    msg.artifacts.forEach(artifact => {
+      artifactList.push(artifact);
+      upsertArtifactCard(artifact);
+    });
   }
 }

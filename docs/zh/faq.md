@@ -44,7 +44,23 @@ PPT Master 可以在任何能读取文件和执行命令的 AI 编程代理中�
 
 ## Q: 生成的 PPT 可以编辑吗？
 
-可以。主 `.pptx`（原生 PowerPoint 形状，文字、图形、颜色均可直接编辑，无需转换）以时间戳命名保存至 `exports/`。SVG 快照版 `_svg.pptx` 与 Executor 原始 SVG 源（`svg_output/` 副本）一同归档至 `backup/<timestamp>/`，便于回溯视觉参考或基于该版重跑 `finalize_svg → svg_to_pptx` 重建 pptx，无需再走 LLM。`backup/<timestamp>/` 目录可手动清理。需要 **Office 2016** 或更高版本。
+可以。主 `.pptx`（原生 PowerPoint 形状，文字、图形、颜色均可直接编辑，无需转换）以时间戳命名保存至 `exports/`。Executor 的原始 SVG 源（`svg_output/` 副本）始终镜像到 `backup/<timestamp>/svg_output/`，便于归档或基于该版重跑 `finalize_svg → svg_to_pptx` 重建 pptx，无需再走 LLM。加 `--svg-snapshot` 会额外在 `exports/` 内并排生成 SVG 快照版 pptx，便于跨平台单文件分发；默认关闭——日常开发/诊断场景中 live preview 已经提供了 SVG 视觉参考。需要 **Office 2016** 或更高版本。
+
+## Q: 为什么一段正文被拆成了好几个文本框？能不能一段一个文本框？
+
+默认就是按行拆框——SVG 里的每一视觉行都会变成一个独立的 PowerPoint 文本框。这样做是为了**逐像素保留 SVG 的版式**，对封面、图表、表格、以及任何对版式精度敏感的页面来说是必要的。
+
+如果你希望按整段编辑正文，重新导出时加上 `--merge-paragraphs`：
+
+```bash
+python3 skills/ppt-master/scripts/svg_to_pptx.py <project_path> --merge-paragraphs
+```
+
+可合并的段落块（同 x、dy 围绕同一行距聚集、段间允许更大间距）会合并成一个可编辑的文本框，内部为多个 `<a:p>`，并精确保留行距。**拉伸框时文字会在框内自动重排**。
+
+**代价**：PowerPoint 自动换行后，行数可能与原 SVG 不一致——页面版式会与原 SVG 有偏差。适合正文密集型页面（abstract、多段落章节、参考文献等）；版式敏感的页面继续用默认。判定足够保守——非段落型 `<text>` 会自动落回默认的按行拆框路径。
+
+跟 AI 对话时也可以直接说："我想整段编辑 abstract" / "让文本框能自适应" —— AI 会替你打开这个开关。默认关闭，不影响已有项目。
 
 ## Q: 三种执行师有什么区别？
 
@@ -68,7 +84,7 @@ PPT Master 本身免费开源，唯一的成本来自你自己的 AI 模型用�
 
 ## Q: 页面切换和元素动画可以调吗？
 
-可以。页间转场（默认 `fade` 0.4s）和页内元素入场动画（默认 `mixed` 效果 + `after-previous` 自动级联）都通过 `svg_to_pptx.py` 的参数控制——`-t/--transition` 控制页级，`-a/--animation` 控制元素级。常用一行命令：
+可以。页间转场（默认 `fade` 0.4s）和页内元素入场动画（默认 `auto` 效果 + `after-previous` 自动级联，根据每个 group 的 SVG id 自动映射效果——图片类 id 在视觉池中循环以产生 deck 内变化）都通过 `svg_to_pptx.py` 的参数控制——`-t/--transition` 控制页级，`-a/--animation` 控制元素级。常用一行命令：
 
 ```bash
 python3 skills/ppt-master/scripts/svg_to_pptx.py <project> -t push       # 换转场效果

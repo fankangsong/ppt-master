@@ -2,7 +2,39 @@
 
 > Architecture rationale (why provider-specific config keys instead of a generic `IMAGE_API_KEY`, why permissive license filter with strict-mode escape hatch, why external refs in dev but two divergent embedding strategies for delivery): see [docs/technical-design.md "Image Acquisition & Embedding"](../../../../docs/technical-design.md#image-acquisition--embedding).
 
-Image tools cover prompt-based AI generation, web image search, image inspection, and Gemini watermark removal.
+Image tools cover formula rendering, prompt-based AI generation, web image search, image inspection, and Gemini watermark removal.
+
+## `latex_render.py`
+
+Manifest-driven LaTeX formula renderer. Strategist writes `images/formula_manifest.json` after the Typography confirmation; this script renders only those declared formulas to transparent PNGs and writes dimensions back into the manifest.
+
+```bash
+python3 scripts/latex_render.py <project_path>
+python3 scripts/latex_render.py <project_path> --dry-run
+python3 scripts/latex_render.py <project_path> --providers codecogs,quicklatex,mathpad,wikimedia
+```
+
+Manifest shape:
+
+```json
+{
+  "providers": ["codecogs", "quicklatex", "mathpad", "wikimedia"],
+  "items": [
+    {
+      "id": "formula_001",
+      "latex": "E = mc^2",
+      "display": "block",
+      "color": "#1D1D1F",
+      "background": "#FFFFFF",
+      "transparent": true,
+      "dpi": 300,
+      "filename": "formula_001.png"
+    }
+  ]
+}
+```
+
+Output files land directly under `project/images/`. Formula filenames should use a shared `formula_` prefix, e.g. `formula_001.png`. The default provider chain is `codecogs,quicklatex,mathpad,wikimedia`; each provider is tried automatically until one succeeds, and the winning provider is recorded back into the manifest. `--providers` or manifest-level `providers` may override the order, but all four are available as no-key fallbacks. Formula PNGs are transparent by default. `background` is the temporary render matte and local background-removal reference; set `transparent: false` only when an opaque final formula asset is intentional. The script does not scan `spec_lock.md` or source documents for `$...$`; formula selection is a Strategist decision.
 
 ## `image_gen.py`
 
@@ -33,6 +65,7 @@ Configuration sources:
 1. Current process environment variables
 2. First `.env` found in this order:
    - Current working directory
+   - Skill directory (e.g. `~/.agents/skills/ppt-master/.env`)
    - Clone repo root
    - `~/.ppt-master/.env`
 
@@ -69,6 +102,8 @@ Current process environment wins over `.env`.
 
 OpenAI backend notes:
 - `gpt-image-2` is the default OpenAI model.
+- Requests are sent with plain `requests.post()` to improve compatibility with
+  OpenAI-compatible proxies that block the OpenAI SDK's `httpx` transport.
 - For `gpt-image-2`, `image_size=512px` means a low-quality draft preset, not a literal 512px edge. The model requires both edges to be multiples of 16px, a long:short ratio no greater than 3:1, and total pixels between 655,360 and 8,294,400.
 - `OPENAI_BACKGROUND=transparent` is not supported by `gpt-image-2`; use `auto` or `opaque`.
 - If `OPENAI_OUTPUT_FORMAT=jpeg` or `webp`, generated files use `.jpg` or `.webp` extensions instead of `.png`.

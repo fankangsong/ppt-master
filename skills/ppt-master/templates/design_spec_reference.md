@@ -60,10 +60,12 @@
 
 ### AI Image Strategy (fill only when §VIII has `ai` rows)
 
-- **Image Rendering**: [one of the 16 names in `references/image-renderings/_index.md`, e.g. `vector-illustration`]
-- **Image Palette**: [one of the 10 names in `references/image-palettes/_index.md`, e.g. `cool-corporate`]
+- **Image Rendering**: [one of the 20 names in `references/image-renderings/_index.md` (e.g. `vector-illustration`), or `custom`]
+- **Image Rendering Behavior**: [required when Rendering is `custom`; one-paragraph prose per `image-renderings/_index.md §1.5`]
+- **Image Palette**: [one of the 14 names in `references/image-palettes/_index.md` (e.g. `cool-corporate`), or `custom`]
+- **Image Palette Behavior**: [required when Palette is `custom`; one-paragraph prose per `image-palettes/_index.md §2`]
 
-> Strategist: lock these once per deck in h.5; every AI image inherits them. Cross-check the rendering × palette compatibility matrix in `image-palettes/_index.md` — avoid `✗` combinations. Leave the section out entirely if §VIII has no `ai` rows.
+> Strategist: lock these once per deck in h.5; every AI image inherits them. Cross-check the rendering × palette compatibility matrix in `image-palettes/_index.md` — avoid `✗` combinations (matrix only covers presets; when either dimension is `custom`, Strategist owns the compatibility judgment). Leave the section out entirely if §VIII has no `ai` rows. Omit the `Behavior` rows whenever the corresponding dimension is a preset name.
 
 ### Gradient Scheme (if needed, using SVG syntax)
 
@@ -240,33 +242,47 @@ Catalog read: 71 templates
 
 ## VIII. Image Resource List (if needed)
 
-| Filename | Dimensions | Ratio | Purpose | Type | Acquire Via | Status | Reference | text_policy | page_role |
-| -------- | --------- | ----- | ------- | ---- | ----------- | ------ | --------- | ----------- | --------- |
-| cover_bg.png | {canvas_info['dimensions']} | [ratio] | Cover background | Background | ai | Pending | [subject + intent + composition, no style/HEX] | | |
+| Filename | Dimensions | Ratio | Purpose | Type | Layout pattern | Acquire Via | Status | Reference | text_policy | page_role |
+| -------- | --------- | ----- | ------- | ---- | -------------- | ----------- | ------ | --------- | ----------- | --------- |
+| cover_bg.png | {canvas_info['dimensions']} | [ratio] | Atmospheric cover backdrop — SVG title overlays the calm region | Background | #1 full-bleed background with floating title + #29 two-stop scrim | ai | Pending | [subject + intent + composition, no style/HEX] | none | hero_page |
+| comparison_p07.png | {canvas_info['dimensions']} | [ratio] | Three-panel approach comparison — panel labels stay inside the image | Diagram | #44 background image + native network/architecture diagram | ai | Pending | Three side-by-side schematic motifs comparing approach A / B / C, panel labels rendered inside each motif | embedded | local |
+| formula_001.png | [actual dimensions from formula manifest / image_analysis] | [ratio] | Block equation on P03 | Latex Formula | formula-block | formula | Rendered | `E = mc^2` — energy-mass equation | | |
+
+> **Layout pattern column is MANDATORY** — for non-formula rows, value is one or more `#<id> <name>` joined by ` + ` drawn verbatim from [`references/image-layout-patterns.md`](../references/image-layout-patterns.md) (Primary + optional Modifiers). Empty cells, paraphrased names, or invented ids invalidate the row. Formula rows are the only exception; use `formula-inline` or `formula-block`. See `strategist.md §h` GATE for the three-layer requirement (read → produce → image-as-canvas coverage).
+
+**Type** (free-form category tag; common values):
+
+- `Background` — cover / chapter / full-bleed atmosphere
+- `Photography` — real-world photo
+- `Illustration` — vector / flat / painterly art
+- `Diagram` — schematic / architecture / flowchart
+- `Portrait` — single-subject person
+- `Latex Formula` — formula PNG rendered by `latex_render.py`
 
 **Status**:
 
 - **Pending** — needs AI generation or web sourcing
+- **Rendered** — deterministic formula asset already exists under `images/`
 - **Existing** — user-supplied, place in `images/`
 - **Placeholder** — not yet processed, use dashed border in SVG
 
-**Type** (narrative shorthand — kept for backward compatibility; Image_Generator infers its 9-way internal-composition type from `Purpose`):
+**Acquire Via**:
 
-- **Background** — full-page (covers / chapters); reserve text area
-- **Photography** — real scenes, people, products, architecture
-- **Illustration** — flat / vector / cartoon / concept diagrams
-- **Diagram** — flowcharts, architecture diagrams, concept maps
-- **Decorative** — partial decorations, textures, borders, dividers
+- `ai` — Step 5 Image_Generator
+- `web` — Step 5 Image_Searcher
+- `formula` — already rendered by `latex_render.py` before this spec was written
+- `user` — user-supplied
+- `placeholder` — intentionally deferred
 
-**text_policy** (`ai` rows only; leave blank for default):
+**text_policy** (`ai` rows only; AI judges per row, no global default bias):
 
-- *blank / `none`* — image carries no text; SVG overlays labels (recommended default for most rows)
-- `embedded` — image contains 1-5 short English keywords as part of the artwork (rare; sketch-notes / ink-notes / typography only; CJK characters fail in most models)
+- `none` — image carries no text; SVG overlays all labels
+- `embedded` — image contains in-artwork text: decorative lettering, a designed title, hand-lettered keywords, or stable visual identifiers (axis labels, subplot letters, unit symbols). Body copy / data points / long quotes never go inside the image regardless — they must stay editable. Embedded text is frozen into the raster; verify the rendered text in the output
 
 **page_role** (`ai` rows only; leave blank for default):
 
-- *blank / `local`* — image is a block embedded in an SVG page (the universal default)
-- `full_page` — escape hatch: image fills the entire slide with no SVG overlay. Only when user explicitly requests this; use sparingly (≤5% of pages) — PNG-pages mixed with SVG-pages cause style drift
+- *blank / `local`* — image is a region block on an SVG page
+- `hero_page` — image is the page's main voice; SVG overlay is minimal or empty. Use on covers, chapter dividers, mood transitions, single-number data heroes, closing quotes. Same rendering and palette as the rest of the deck regardless
 
 **Reference grammar** (`ai` rows): write **subject + intent + composition** only. Do NOT repeat style words ("flat design", "modern") or HEX values — both are already locked deck-wide by `design_spec §III AI Image Strategy` (rendering + palette) and `§III Color Scheme` (HEX triplet). Image_Generator's prompt assembler injects them.
 

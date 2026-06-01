@@ -1,6 +1,6 @@
 # PPT Master — AI generates natively editable PPTX from any document
 
-[![Version](https://img.shields.io/badge/version-v2.7.0-blue.svg)](https://github.com/hugohe3/ppt-master/releases)
+[![Version](https://img.shields.io/badge/version-v2.9.0-blue.svg)](https://github.com/hugohe3/ppt-master/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/hugohe3/ppt-master.svg)](https://github.com/hugohe3/ppt-master/stargazers)
 [![AtomGit stars](https://atomgit.com/hugohe3/ppt-master/star/badge.svg)](https://atomgit.com/hugohe3/ppt-master)
@@ -8,13 +8,17 @@
 English | [中文](./README_CN.md)
 
 <p align="center">
-  <sub>This project is kept free and open source with the support of <a href="https://www.packyapi.com/register?aff=ppt-master">PackyCode</a> and other sponsors.</sub>
+  <sub>This project is kept free and open source with the support of <a href="https://www.packyapi.com/register?aff=ppt-master">PackyCode</a>, <a href="https://apikey.fun/register?aff=PPT-MASTER">APIKEY.FUN</a> and other sponsors.</sub>
 </p>
 
 <table>
   <tr>
     <td width="180"><a href="https://www.packyapi.com/register?aff=ppt-master"><img src="docs/assets/sponsors/packycode.png" alt="PackyCode" width="150"></a></td>
     <td>Thanks to PackyCode for sponsoring this project! PackyCode is a reliable and efficient API relay service provider, offering relay services for Claude Code, Codex, Gemini, and more. PackyCode provides special discounts for our project users: register using <a href="https://www.packyapi.com/register?aff=ppt-master">this link</a> and enter the promo code <strong>ppt-master</strong> during recharge to get 10% off.</td>
+  </tr>
+  <tr>
+    <td width="180"><a href="https://apikey.fun/register?aff=PPT-MASTER"><img src="docs/assets/sponsors/apikey-fun.png" alt="APIKEY.FUN" width="150"></a></td>
+    <td>Thanks to APIKEY.FUN for sponsoring this project! APIKEY.FUN is a professional enterprise-grade AI relay service committed to stable, efficient, and low-cost AI access for businesses and developers. The platform supports mainstream models including Claude, OpenAI, and Gemini, with prices as low as <strong>7% of official rates</strong>. Register through <a href="https://apikey.fun/register?aff=PPT-MASTER">our dedicated link</a> for an exclusive perk: <strong>up to 5% off on top-ups, permanently</strong>.</td>
   </tr>
 </table>
 
@@ -23,36 +27,65 @@ English | [中文](./README_CN.md)
   <a href="https://www.hehugo.com/"><strong>About Hugo He</strong></a> ·
   <a href="./examples/"><strong>Examples</strong></a> ·
   <a href="./docs/faq.md"><strong>FAQ</strong></a> ·
+  <a href="./docs/roadmap.md"><strong>Roadmap</strong></a> ·
   <a href="mailto:heyug3@gmail.com"><strong>Contact</strong></a>
 </p>
 
-<p align="center">
-  <img src="docs/assets/hero-liziqi-colors.gif" alt="Demo: generating a 12-page PPT from a WeChat article with Claude Opus 4.7" width="860" />
-</p>
+<h3 align="center">Download the new <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_attention_is_all_you_need/exports/attention_is_all_you_need_narrated.pptx">narrated <em>Attention Is All You Need</em> deck</a> — play it in PowerPoint and every slide reads itself out loud. That's just the tip of what PPT Master can do.</h3>
+<h3 align="center">Of course, you can also download any of the six example decks below — opening the raw .pptx in PowerPoint is the fastest way to see this project's real capability ceiling.</h3>
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_pritzker_2026"><img src="docs/assets/screenshots/preview_pritzker_2026.png" alt="Editorial magazine — Pritzker 2026 architecture review" /></a><br/>
+      <sub><b>Editorial Magazine</b> — architecture photography, calm typographic grid<br/>
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_pritzker_2026">Flip online</a> · <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_pritzker_2026/exports/pritzker_2026.pptx">Download .pptx</a></sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_global_ai_capital_2026"><img src="docs/assets/screenshots/preview_global_ai_capital.png" alt="Data journalism — Global AI Capital 2026" /></a><br/>
+      <sub><b>Data Journalism</b> — Bloomberg-style dark dashboard, chart-driven<br/>
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_global_ai_capital_2026">Flip online</a> · <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_global_ai_capital_2026/exports/global_ai_capital_2026.pptx">Download .pptx</a></sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_swiss_grid_systems"><img src="docs/assets/screenshots/preview_swiss_grid.png" alt="Swiss typographic grid — Grid Systems primer" /></a><br/>
+      <sub><b>Swiss Grid</b> — strict modular grid, restrained type, red-accent<br/>
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_swiss_grid_systems">Flip online</a> · <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_swiss_grid_systems/exports/swiss_grid_systems.pptx">Download .pptx</a></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_glassmorphism_demo"><img src="docs/assets/screenshots/preview_glassmorphism_demo.png" alt="Glassmorphism SaaS — AI Agent engineering demo" /></a><br/>
+      <sub><b>Glassmorphism SaaS</b> — translucent layers, gradient depth, product UI<br/>
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_glassmorphism_demo">Flip online</a> · <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_glassmorphism_demo/exports/glassmorphism_demo.pptx">Download .pptx</a></sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_sugar_rush_memphis"><img src="docs/assets/screenshots/preview_sugar_rush_memphis.png" alt="Memphis pop — Sugar Rush festival" /></a><br/>
+      <sub><b>Memphis Pop</b> — bold primaries, geometric patterns, playful energy<br/>
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_sugar_rush_memphis">Flip online</a> · <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_sugar_rush_memphis/exports/sugar_rush_memphis.pptx">Download .pptx</a></sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_indie_bookstore_zine_guide"><img src="docs/assets/screenshots/preview_indie_bookstore_zine.png" alt="Risograph zine — Indie bookstore guide" /></a><br/>
+      <sub><b>Risograph Zine</b> — duotone print, hand-made bookstore-culture feel<br/>
+      <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_indie_bookstore_zine_guide">Flip online</a> · <a href="https://raw.githubusercontent.com/hugohe3/ppt-master/main/examples/ppt169_indie_bookstore_zine_guide/exports/indie_bookstore_zine_guide.pptx">Download .pptx</a></sub>
+    </td>
+  </tr>
+</table>
 
 <p align="center">
-  <sub>↑ A <a href="https://hugohe3.github.io/ppt-master/viewer.html?project=ppt169_liziqi_plant_dye_colors">12-page natively editable deck</a>, generated end-to-end from <a href="https://mp.weixin.qq.com/s/6ZmBl0uE3sOtD8TJcHfNAw">a single WeChat article URL</a> using Claude Opus 4.7. No manual design. No image export. Every shape, text box, and chart is clickable and editable in PowerPoint.</sub>
+  <sub>Generated with Claude Opus 4.7 + <code>gpt-image-2</code>. <a href="https://hugohe3.github.io/ppt-master/">Flip through all examples online →</a> · <a href="./examples/"><code>examples/</code> directory</a> · <a href="./docs/why-ppt-master.md">Why PPT Master?</a></sub>
 </p>
 
 ---
 
-Drop in a PDF, DOCX, URL, or Markdown — get back a **natively editable PowerPoint** with real shapes, real text boxes, and real charts. Not images. Click anything and edit it.
+Drop in your source material and get back a **real PowerPoint**: directly editable, with native slide transitions and entrance animations, speaker notes you can turn into audio narration, and the option to follow your own PPT template — a complete deck you can present as-is and keep editing. How to use each capability → [Getting Started](./docs/getting-started.md).
 
 > **⚠️ PPT Master is a harness, not a complete agent.** `harness + model = agent` — the tool owns the workflow; the model sets the ceiling. To form a genuinely high-quality agent, use **Claude with a large context window (~1M tokens) + AI image generation (`gpt-image-2`)**. Other models can run the pipeline but cannot reach the same quality ceiling. If results disappoint, upgrade the model — don't blame the harness.
-
-> **Live Preview & Visual Edits** — during generation, a browser preview at `http://localhost:5050` opens automatically. Click any element, write what to change, hit **Submit annotations**, then return to the chat and say "apply my annotations" — the AI rewrites the SVG and re-exports the PPTX. Originally PPT Master was chat-only by design, but enough users asked for visual editing that we folded it in. Built on top of [@WodenJay](https://github.com/WodenJay)'s [PR #85](https://github.com/hugohe3/ppt-master/pull/85) — thank you. See [Live Preview Workflow →](./skills/ppt-master/workflows/live-preview.md).
-
-> **Template Replication** — hand the AI any `.pptx` you like and say "replicate it as a template via `/create-template`" — you get a layout set PPT Master can invoke directly. Theme colors, fonts, master/layout structure, reusable images, even sprite-sheet crop relationships are extracted straight from OOXML, so covers, chapter dividers and decoration-heavy pages all reproduce reliably. You're no longer limited to the built-in templates: a company brand deck, a client's winning template, or any high-quality reference can become a private template in your own library. See [Templates Guide →](./docs/templates-guide.md).
-
-> **Animations** — exported decks support **page transitions** and **per-element entrance animations** as real OOXML, not embedded video. By default, elements cascade in automatically on slide entry — no clicking needed. Plays natively in PowerPoint and Keynote, no extra tooling. See [Animations & Transitions →](./skills/ppt-master/references/animations.md).
-
-> **Narration & Video** — generate per-slide voice narration from the speaker notes (`edge-tts` by default, optional cloud TTS providers for high-quality narration), embed the audio back into the PPTX, and let PowerPoint export the deck as an MP4 video — synced narration + transitions, no third-party tools. See [Audio Narration & Video Export →](./docs/audio-narration.md).
->
-> **Voice Cloning** — bring your own cloned voice from ElevenLabs / MiniMax / Qwen / CosyVoice and have the entire deck narrated in *your* voice (or a presenter's, with permission). Clone once in the provider's console, then pass the `voice_id` — PPT Master reads every slide's notes in that voice and embeds the result back into the PPTX. See [Use a cloned voice →](./docs/audio-narration.md#use-a-cloned-voice).
 
 > **How it works** — PPT Master is a workflow (a "skill") that works inside AI IDEs like Claude Code, Cursor, VS Code + Copilot, or Codebuddy. You chat with the AI — "make a deck from this PDF" — and it follows the workflow to produce a real editable `.pptx` on your computer. No coding on your side; the IDE is just where the conversation happens.
 >
 > **What you'll do**: install Python, install an AI IDE, drop in your material.
+
+> **Why it's shaped this way** — knowing how to use Python and AI agents will matter more and more. This project is meant to show how far you can go with just those two things. There's a learning curve if you're starting cold, but it's the curve worth climbing. Making a deck is just the excuse — what I'm really pushing is Python and agents.
 
 PPT Master is different:
 
@@ -69,25 +102,6 @@ AI presentation tools roughly fall into four categories. PPT Master only does th
 | Image-based | One large image per slide, packed into PPTX | ❌ each slide is a picture |
 | HTML presentation | Web-based deck | ❌ not a PPTX |
 | **Native editable (PPT Master)** | **Real DrawingML shapes, text boxes, charts** | ✅ click any element to edit |
-
-**[See live examples →](https://hugohe3.github.io/ppt-master/)** · [`examples/`](./examples/) — 22 projects, 309 pages · **[Why PPT Master?](./docs/why-ppt-master.md)**
-
-## Gallery
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/assets/screenshots/preview_magazine_garden.png" alt="Magazine style — Garden building guide" /><br/><sub><b>Magazine</b> — warm earthy tones, photo-rich layout</sub></td>
-    <td align="center"><img src="docs/assets/screenshots/preview_academic_medical.png" alt="Academic style — Medical image segmentation research" /><br/><sub><b>Academic</b> — structured research format, data-driven</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="docs/assets/screenshots/preview_dark_art_mv.png" alt="Dark art style — Music video analysis" /><br/><sub><b>Dark Art</b> — cinematic dark background, gallery aesthetic</sub></td>
-    <td align="center"><img src="docs/assets/screenshots/preview_nature_wildlife.png" alt="Nature style — Wildlife wetland documentary" /><br/><sub><b>Nature Documentary</b> — immersive photography, minimal UI</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="docs/assets/screenshots/preview_tech_claude_plans.png" alt="Tech style — Claude AI subscription plans" /><br/><sub><b>Tech / SaaS</b> — clean white cards, pricing table layout</sub></td>
-    <td align="center"><img src="docs/assets/screenshots/preview_launch_xiaomi.png" alt="Product launch style — Xiaomi spring release" /><br/><sub><b>Product Launch</b> — high contrast, bold specs highlight</sub></td>
-  </tr>
-</table>
 
 ---
 
@@ -161,7 +175,7 @@ PPT Master runs in **any tool with agent capability** — read/write files, exec
 
 > **Model recommendation**: prefer **Claude Opus / Sonnet** with a large context window and `gpt-image-2` for images — see the note above for why.
 
-**🔑 Want to use Claude / GPT / Gemini but don't have access yet?** Project sponsor **[PackyCode](https://www.packyapi.com/register?aff=ppt-master)** can help — whether you lack an API key, can't connect directly, have no way to subscribe, or just don't want to pay a full monthly fee for occasional use, PackyCode lets you call Claude, GPT, Gemini and more on a pay-as-you-go basis, no subscription required. **PackyCode gives you direct access to Claude models** — the recommended engine for PPT Master. Enter promo code **`ppt-master`** when topping up for 10% off.
+**🔑 Want to use Claude / GPT / Gemini but don't have access yet?** Project sponsors **[PackyCode](https://www.packyapi.com/register?aff=ppt-master)** and **[APIKEY.FUN](https://apikey.fun/register?aff=PPT-MASTER)** can help — both offer pay-as-you-go access to Claude, GPT, Gemini and more, no subscription required. **PackyCode**: 10% off with promo code **`ppt-master`** at top-up. **APIKEY.FUN**: prices as low as **7% of official rates**; register via our link for an exclusive permanent discount of up to 5% on top-ups.
 
 ### 3. Set Up
 
@@ -221,7 +235,7 @@ AI:  Sure. Let's confirm the design spec:
 
 The AI handles everything — content analysis, visual design, SVG generation, and PPTX export.
 
-> **Output:** Main native-shapes `.pptx` (directly editable) saved to `exports/<name>_<timestamp>.pptx`. The SVG snapshot `_svg.pptx` and a copy of `svg_output/` are archived to `backup/<timestamp>/` for visual reference and pptx rebuild without re-running the LLM. Requires Office 2016+.
+> **Output:** Native-shapes `.pptx` (directly editable) saved to `exports/<name>_<timestamp>.pptx`. A copy of `svg_output/` is always snapshotted to `backup/<timestamp>/svg_output/` for re-export / archival. Pass `--svg-snapshot` to additionally emit an SVG-image preview pptx alongside the native pptx in `exports/` (see [FAQ](./docs/faq.md)). Requires Office 2016+.
 
 > **AI lost context?** Ask it to read `skills/ppt-master/SKILL.md`.
 
@@ -238,7 +252,7 @@ mkdir -p ~/.ppt-master
 cp /path/to/installed/ppt-master/.env.example ~/.ppt-master/.env
 ```
 
-PPT Master reads the current process environment first, then the first `.env` found in this order: current working directory, clone repo root, `~/.ppt-master/.env`.
+PPT Master reads the current process environment first, then the first `.env` found in this order: current working directory, skill directory (e.g. `~/.agents/skills/ppt-master/.env`), clone repo root, `~/.ppt-master/.env`.
 
 **A) AI generation** — `image_gen.py`. Set `IMAGE_BACKEND` plus the provider's `*_API_KEY` (`OPENAI_API_KEY`, `GEMINI_API_KEY`, etc.), and the pipeline calls it automatically. Run `python3 skills/ppt-master/scripts/image_gen.py --list-backends` for the full backend list. `gpt-image-2` is currently the best default.
 
@@ -252,15 +266,13 @@ PPT Master reads the current process environment first, then the first `.env` fo
 
 | | Document | Description |
 |---|----------|-------------|
+| 📘 | [Getting Started](./docs/getting-started.md) | First deck in 3 steps, plus how to use templates, live preview, animations, narration, voice cloning (**new users start here**) |
 | 🆚 | [Why PPT Master](./docs/why-ppt-master.md) | How it compares to Gamma, Copilot, and other AI tools |
 | 🪟 | [Windows Installation](./docs/windows-installation.md) | Step-by-step setup guide for Windows users |
 | 📖 | [SKILL.md](./skills/ppt-master/SKILL.md) | Core workflow and rules |
-| 🎨 | [Templates Guide](./docs/templates-guide.md) | Use, derive (the focus), and template boundaries; covers `standard` vs `fidelity` modes |
 | 📐 | [Canvas Formats](./skills/ppt-master/references/canvas-formats.md) | PPT 16:9, Xiaohongshu, WeChat, and 10+ formats |
-| 🎬 | [Animations & Transitions](./skills/ppt-master/references/animations.md) | Page transitions and per-element entrance animations |
-| 🎙️ | [Audio Narration & Video Export](./docs/audio-narration.md) | TTS narration in 90+ locales, embed audio, export as MP4 |
 | 🛠️ | [Scripts & Tools](./skills/ppt-master/scripts/README.md) | All scripts and commands |
-| 💼 | [Examples](./examples/README.md) | 22 projects, 309 pages |
+| 💼 | [Examples](./examples/README.md) | All example projects |
 | 🏗️ | [Technical Design](./docs/technical-design.md) | Architecture, design philosophy, why SVG |
 | ❓ | [FAQ](./docs/faq.md) | Model selection, cost, layout troubleshooting, custom templates |
 
@@ -307,6 +319,8 @@ PPT Master is currently built and maintained primarily by me. Every new template
 **Corporate sponsors**
 
 <a href="https://www.packyapi.com/register?aff=ppt-master"><img src="docs/assets/sponsors/packycode.png" alt="PackyCode" height="40" /></a>
+&nbsp;
+<a href="https://apikey.fun/register?aff=PPT-MASTER"><img src="docs/assets/sponsors/apikey-fun.png" alt="APIKEY.FUN" height="40" /></a>
 &nbsp;
 <a href="https://m.do.co/c/547f129aabe1"><img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PoweredByDO/DO_Powered_by_Badge_blue.svg" alt="Powered by DigitalOcean" height="40" /></a>
 

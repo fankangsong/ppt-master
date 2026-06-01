@@ -36,13 +36,17 @@
     ↓
 [图表校准（可选）] → verify-charts 工作流（含数据图表的幻灯片在此步骤校准坐标）
     ↓
+[视觉自检（可选，opt-in）] → visual-review 工作流（仅在用户明确请求时触发）
+    ↓
 [后处理] → total_md_split.py（拆分讲稿）→ finalize_svg.py → svg_to_pptx.py
     ↓
 输出：
     exports/
-    └── presentation_<timestamp>.pptx          ← 原生形状版（DrawingML）— 推荐用于编辑与交付
+    ├── presentation_<timestamp>.pptx          ← 原生形状版（DrawingML）— 唯一标准产物，编辑/交付从这里走
+    └── presentation_<timestamp>_svg.pptx      ← SVG 快照版 pptx — 像素级视觉参考（加 --svg-snapshot 时生成）
+
+    # 默认流程（未指定 -o）始终写入
     backup/<timestamp>/
-    ├── presentation_svg.pptx                  ← SVG 快照版 — 像素级视觉参考备份
     └── svg_output/                            ← Executor 原始 SVG 备份（重跑 finalize_svg → svg_to_pptx 即可重建 pptx）
 ```
 
@@ -124,7 +128,7 @@ PPT Master 不只服务 PPT——同一套 SVG → DrawingML 流水线还能产�
 
 **为什么默认自由设计。** 模板是地板，但很容易变成天花板：它会把整个 deck 锁进模板自有的视觉惯用语，无视内容本身想要怎样被呈现。自由设计的布局从源内容的结构推导而来，而不是从一套固定语法套上去——视觉节奏跟着内容走，而不是跟内容打架。约束模式在窄场景里确实更好（品牌锁定的 deck、强类型场景如学术答辩或政府报告），所以它一直在；但 AI 不主动去抓，是用户去抓。
 
-**不主动匹配。** AI 不会基于内容向用户推荐、暗示或自动映射模板。即便某份 deck 看起来"明显适合"库里某个模板，没有用户点名，AI 也保持沉默，按自由设计走。理由是可靠性优先于发现性：把内容与模板做匹配是会随库演进而漂移的判断，一句错误的"或许你想用 X"会把用户推向 AI 本就无法可靠承诺的选择。发现性交给文档（`templates/layouts/README.md`）和显式查询路径（"有哪些模板可以用？"）承担，不放进运行时 prompt。
+**不主动匹配。** AI 不会基于内容向用户推荐、暗示或自动映射模板。即便某份 deck 看起来"明显适合"库里某个模板，没有用户点名，AI 也保持沉默，按自由设计走。理由是可靠性优先于发现性：把内容与模板做匹配是会随库演进而漂移的判断，一句错误的"或许你想用 X"会把用户推向 AI 本就无法可靠承诺的选择。发现性交给文档（三类各自的 `templates/{brands,layouts,decks}/README.md`）和显式查询路径（"有哪些模板可以用？"）承担，不放进运行时 prompt。
 
 **布局是 opt-in，图表和图标不是。** 这种不对称不是矛盾——*布局*正是锁定视觉惯用语的那一层（地板/天花板问题），而图表和图标是不会施加 deck 级风格约束的复用原语。同一个 `templates/` 目录，但在视觉契约里扮演的角色不同。
 
@@ -179,6 +183,25 @@ Strategist 阶段产出两份看起来冗余但服务不同对象的产物：
 
 **开发期外部引用，交付期分叉成两套嵌入策略。** 在 `svg_output/` 里编辑时，图片是外部文件引用——快速迭代、单点替换。两份交付产物随后分叉：`svg_final/` 走 Base64 内联（产出一组自包含 SVG，IDE 预览、浏览器、preview pptx 都能开而不丢位图依赖）；native pptx 反过来把位图复制进 PPTX 的 media 文件夹，用 `<a:srcRect>` 表达裁剪。分叉的理由：在 DrawingML 里塞 Base64 能跑但文件膨胀 3-4 倍；文件引用的位图是 PowerPoint 原生表达方式，配 `<a:srcRect>` 的裁剪也是 DrawingML 的规范写法——任一方向用错工具都要付出可编辑性或文件大小的代价。
 
+**AI 图片三维系统：Strategist 阶段就锁定。** 当 deck 包含 AI 生成图片时，Strategist 在前置阶段一次性确定三个正交维度——`rendering`（视觉风格家族：vector-illustration / editorial / 3d-isometric / sketch-notes / ……）、`palette`（deck 的 HEX 在图里**怎么用**：比例 + 角色 + 气质）、`type`（每张图的内部构图：background / hero / framework / comparison / ……）。前两个是 deck 级、写进 `spec_lock.md`；Image_Generator 此后每张图的 prompt 都从同一份锁定的 rendering + palette 加上该图的 type 组装出来，而不是逐图重决风格。没有这层锁定，每张图都会自己风格漂移，整套 deck 读起来就是一摞互不相关的插画。这是 `spec_lock` 字体/色彩抗漂移机制在像素上游的对偶——同一思路，往前推一层。Strategist 在八项确认阶段会向用户呈现 **≥3 个 `rendering × palette` 候选**，绝不静默地自动锁定单一组合，因为这是一个会牵动全 deck 视觉的选择，唯一权威只有用户的品味。
+
+---
+
+## 图文版式：Primary 主结构 + Modifier 修饰层
+
+「图片**怎么放上幻灯片**」的词表（完整词汇在 [`references/image-layout-patterns.md`](../../skills/ppt-master/references/image-layout-patterns.md)）把 72 条编号技法拆成两层、自由组合：
+
+- **Primary 主结构**（容器布局 / 图作画布 + 原生覆盖 / 多图组合）—— 页面的骨架。一页可一个也可多个；跨 Primary 的组合，如「侧边对比 + 图作画布的注解卡」，是合规的。
+- **Modifier 修饰层**（非矩形裁剪 / 遮罩与叠加 / 纹理 / 特殊技法）—— 装饰层。一页可叠任意多个，附着在 Primary 之上。
+
+**为什么显式鼓励复合，而不是「一页一个 primary」。** 这份词表对抗的 AI 失败模式不是「叠太多」，而是「用得太少」——把每页图片默认堆成裸的 `#2 左三分` 或 `#48 侧边对比`，Modifier 层完全不动，产出视觉扁平的「AI 默认感」版式。早先的规则「一页一个 primary，modifier 可叠」听起来有原则，实际上加剧了 Modifier 层的弃用——AI 把它读作「可以不叠」的许可。现在的措辞反过来：组合是常态，单 Primary + 无 Modifier 才需要解释。
+
+**为什么物理拆分两层，而不是只打标签。** 词表被重排成「Primary 全部在前，Modifier 全部在后」——Strategist 或 Executor 读一次目录，就能从结构上内化「两层」心智模型。编号是稳定 id（`#38` 永远是「图作画布 + 注解卡」，不论它在文件里的物理位置），所以 `spec_lock.md`、`design_spec.md §VIII`、历史 executor 输出、过往示例里所有 `#<id>` 引用照样解析。
+
+**为什么组合走 Strategist 资源列表，不只交给 Executor 临场发挥。** `§VIII 图片资源列表` 的 `Layout pattern` 列接受 `#<id> + #<id> ...` 表达式——Primary id 加可选 Modifier id——所以组合在 SVG 生成**之前**就被声明、被 `svg_quality_checker` 审计、并能在 session 重入后存活。把组合责任只压在 Executor 身上，长 deck 上下文压缩时就会丢；把它编码进 spec_lock 旁的资源列表，组合就成为设计契约的一部分。
+
+**为什么真正的硬约束留在上游。** 跨切的技术硬约束（`<clipPath>` 只能用在 `<image>` 上、用 `fill-opacity` 而非 `rgba()`、禁 `<mask>`、alpha 效果的路由表）独家住在 [`shared-standards.md`](../../skills/ppt-master/references/shared-standards.md)。版式词表只用一行指针指向它们，不复述——这样某条约束放开时（比如某个 DrawingML 特性变得可靠），只有一个文件要改，词表里也不会留下一份过期副本继续暗中强制旧规则。
+
 ---
 
 ## SVG 约束：禁用特性与条件允许
@@ -219,7 +242,8 @@ PowerPoint 的 DrawingML 是 SVG 表达力的严格子集。Executor 在一份�
 | `svg_output/` | 唯一源、手工编辑入口、`update_spec.py`、`svg_quality_checker.py` | 流水线中唯一**手写**而非派生的目录 |
 | `svg_final/` | IDE 内即时预览（VSCode/Cursor 直接打开 `.svg`）、浏览器单页预览 | `.pptx` 在 IDE 里打不开；`svg_output/` 因图标 / 图片是外部引用，IDE 中渲染不完整 |
 | `exports/<name>_<ts>.pptx`（native） | 主交付物——PowerPoint 中以 DrawingML 形状形态可编辑 | 唯一一份用户可在 PowerPoint 中原生改尺寸 / 改色 / 改样式的产物 |
-| `backup/<ts>/<name>_svg.pptx`（preview） | 跨平台单文件分发、整体多页浏览、邮件附件 | 自包含、多页、PowerPoint / Keynote / WPS / LibreOffice 都能直接打开；`svg_final/` 是文件夹，分发不便 |
+| `exports/<name>_<ts>_svg.pptx`（preview，需 `--svg-snapshot` 显式开启） | 跨平台单文件分发、整体多页浏览、邮件附件 | 自包含、多页、PowerPoint / Keynote / WPS / LibreOffice 都能直接打开；`svg_final/` 是文件夹，分发不便。默认关闭——live preview 已经覆盖 dev / 诊断场景的 SVG 视觉参考需求 |
+| `backup/<ts>/svg_output/`（默认流程下始终生成） | 不重跑 LLM 的前提下从冻结 SVG 源重建 pptx、长期存档 | 项目下游被改动后，Executor 原始 SVG 唯一的留存副本 |
 
 ### `svg_finalize/` 包有**两种**消费者
 
@@ -272,4 +296,4 @@ PowerPoint 的 DrawingML 是 SVG 表达力的严格子集。Executor 在一份�
 
 ## Standalone Workflows（独立工作流）
 
-五个能力（`create-template`、`verify-charts`、`customize-animations`、`visual-edit`、`generate-audio`）作为独立工作流存在，而不是流水线步骤。每个都是稀疏触发的——按模板、按含图表的 deck、按一次动画微调、按一次具体抱怨、按一次视频导出，而不是按每个 deck。把任何一个塞进默认流水线，要么对大多数用户运行无意义的步骤（增加延迟和失败面），要么强制一刀切收窄主流程。保持 opt-in 让 deck 生成主流水线保持紧凑、可预期，同时在触发条件命中时仍提供这些能力；每个 `workflows/<name>.md` 是自包含的、按需加载——所以 prompt context 的开销也是 opt-in。
+六个能力（`create-template`、`verify-charts`、`customize-animations`、`live-preview`、`generate-audio`、`visual-review`）作为独立工作流存在，而不是流水线步骤。每个都是稀疏触发的——按模板、按含图表的 deck、按一次动画微调、按一次具体抱怨、按一次视频导出、按用户明确请求的一次视觉自检，而不是按每个 deck。把任何一个塞进默认流水线，要么对大多数用户运行无意义的步骤（增加延迟和失败面），要么强制一刀切收窄主流程。保持 opt-in 让 deck 生成主流水线保持紧凑、可预期，同时在触发条件命中时仍提供这些能力；每个 `workflows/<name>.md` 是自包含的、按需加载——所以 prompt context 的开销也是 opt-in。

@@ -60,7 +60,7 @@ The choice is yours. PPT Master doesn't make that decision for you.
 
 Three built-in styles: General (training, tech talks), Consultant (business reports, data visualization), and Consultant Top (MBB level — investment memos, strategic plans, government briefings).
 
-The [examples/](../examples/) directory contains 22 projects and 309 pages spanning government fiscal analysis, AI architecture design, Zen philosophy, pixel-art gaming, editorial reports, and more.
+The [examples/](../examples/) directory contains all example projects, spanning government fiscal analysis, AI architecture design, Zen philosophy, pixel-art gaming, editorial reports, and more.
 
 ### Full Source-Document Input
 
@@ -81,7 +81,7 @@ Being honest about limitations:
 | **Setup required** | Install Python, clone repo, configure AI editor. Not a "open browser and go" experience. |
 | **Slower generation** | 10–20 min for a 10-page deck (serial page-by-page for cross-slide consistency). SaaS tools take seconds. |
 | **No collaboration** | Local files, no real-time co-editing, no share links. |
-| **No visual UI** | All interaction through AI chat — no drag-and-drop canvas. |
+| **No full freeform canvas** | The browser live preview supports direct edits — select to change text/color/font/size, drag or arrow-key to reposition, with undo — plus click-to-annotate for AI rewrites. What it isn't is a full Gamma/Canva-style freeform canvas: no on-canvas resize handles, and re-exporting to PPTX stays a chat step. |
 
 **If you want zero-setup, instant slides in a browser** — Gamma and Canva are excellent choices.
 

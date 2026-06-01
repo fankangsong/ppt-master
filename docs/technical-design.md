@@ -36,13 +36,17 @@ User Input (PDF/DOCX/XLSX/URL/Markdown)
     ↓
 [Chart calibration (optional)] → verify-charts workflow (for decks containing data charts)
     ↓
+[Visual self-check (optional, opt-in)] → visual-review workflow (only when the user explicitly requests it)
+    ↓
 [Post-processing] → total_md_split.py (split notes) → finalize_svg.py → svg_to_pptx.py
     ↓
 Output:
     exports/
-    └── presentation_<timestamp>.pptx          ← Native shapes (DrawingML) — recommended for editing & delivery
+    ├── presentation_<timestamp>.pptx          ← Native shapes (DrawingML) — canonical output, edit & deliver from here
+    └── presentation_<timestamp>_svg.pptx      ← SVG snapshot pptx — pixel-perfect visual reference (opt-in via --svg-snapshot)
+
+    # Always written in default-flow mode (no -o)
     backup/<timestamp>/
-    ├── presentation_svg.pptx                  ← SVG snapshot — pixel-perfect visual reference backup
     └── svg_output/                            ← Archived Executor SVG source (rerun finalize_svg → svg_to_pptx to rebuild)
 ```
 
@@ -124,7 +128,7 @@ Templates are **opt-in, not default**. The default Strategist flow is free desig
 
 **Why default to free design.** Templates are floors that easily become ceilings: they lock the deck into the template's visual idioms regardless of how the content actually wants to be presented. Free-design layouts derive structure from the source content rather than imposing it from a fixed grammar, so the visual rhythm tracks the content rather than fighting it. Constrained mode is genuinely better in narrow cases (brand-locked decks, strongly-typed scenarios like academic defense or government report), so it stays available — but the AI doesn't proactively reach for it; the user does.
 
-**No proactive matching.** The AI does not suggest, hint at, or auto-map content to a template. Even when a deck looks like an obvious fit for an existing template, the AI stays silent and proceeds with free design unless the user has named the template. The reason is reliability over discoverability: matching content to templates is a judgment call that drifts as the library evolves, and a wrong "you might want X" pushes the user toward a commitment the AI cannot reliably make. Discoverability is handed to docs (`templates/layouts/README.md`) and to the explicit query path ("what templates are available?"), not the runtime prompt.
+**No proactive matching.** The AI does not suggest, hint at, or auto-map content to a template. Even when a deck looks like an obvious fit for an existing template, the AI stays silent and proceeds with free design unless the user has named the template. The reason is reliability over discoverability: matching content to templates is a judgment call that drifts as the library evolves, and a wrong "you might want X" pushes the user toward a commitment the AI cannot reliably make. Discoverability is handed to docs (the three `templates/{brands,layouts,decks}/README.md` per-kind indexes) and to the explicit query path ("what templates are available?"), not the runtime prompt.
 
 **Layouts are opt-in; charts and icons are not.** The asymmetry isn't an inconsistency — *layout* is what locks visual idiom (the floor/ceiling problem above), while charts and icons are reusable primitives that don't impose deck-wide style. Same `templates/` directory, different role in the visual contract.
 
@@ -179,6 +183,25 @@ Two architectural decisions shape this phase:
 
 **External refs during development, two divergent embedding strategies for delivery.** While editing in `svg_output/`, images are external file references — fast iteration, single-source-of-truth replacement. The two delivery artifacts then diverge: `svg_final/` Base64-inlines (a folder of self-contained SVGs that IDE preview, browser, and the preview pptx can all open without missing the bitmap dependencies); native pptx instead copies bitmaps into the PPTX media folder and uses `<a:srcRect>` to express the cropping. The split exists because Base64 inside DrawingML works but bloats file size 3-4×, while file-referenced bitmaps are PowerPoint's native idiom for which `<a:srcRect>` is the canonical crop expression — wrong tool in either direction would cost editability or file size.
 
+**Three-dimensional AI image lock at Strategist time.** When the deck includes AI-generated images, Strategist decides three orthogonal dimensions up front — `rendering` (visual style family: vector-illustration / editorial / 3d-isometric / sketch-notes / …), `palette` (how the deck's HEX values are *used*: proportion + role + temperament), `type` (per-image internal composition: background / hero / framework / comparison / …). The first two are deck-wide and written into `spec_lock.md`; Image_Generator then assembles every per-image prompt from the single locked rendering + palette plus a per-image type, instead of re-deciding style per image. Without this, every image gets its own style drift and the deck reads as a stack of unrelated illustrations. This is the visual-cohesion dual of `spec_lock`'s typography/color anti-drift mechanism, just one level upstream of pixels. Strategist surfaces ≥3 candidate `rendering × palette` combinations to the user during the Eight Confirmations — never auto-locking a single combination silently, because the choice has far-reaching deck-wide consequences and the user's taste is the only oracle for it.
+
+---
+
+## Image-Text Layout: Primary Structures + Modifier Layers
+
+The catalog of *how an image is placed on a slide* (full vocabulary in [`references/image-layout-patterns.md`](../skills/ppt-master/references/image-layout-patterns.md)) splits 72 numbered techniques into two layers that compose freely:
+
+- **Primary Structures** (container layouts / image-as-canvas + native overlay / multi-image compositions) — the page's bones. One or more per page; cross-Primary combinations like *side-by-side comparison + image-as-canvas annotation* are legitimate.
+- **Modifier Layers** (non-rectangular clips / overlays & masks / texture / special techniques) — finish. Any number per page, stacked on top of the Primary.
+
+**Why explicit composition, not "one primary per page".** The AI failure mode this catalog fights isn't *over-combining*, it's *under-using*: defaulting every image page to bare `#2 left-third` or `#48 side-by-side` with no Modifier on top, producing visually flat, "AI-default" layouts. The earlier rule "one primary layout per page; modifiers compose" sounded principled but reinforced the under-use — the AI read it as permission to skip the Modifier layer entirely. The current framing flips the encouragement: combining is normal, single-Primary-no-Modifier is the case that needs justification.
+
+**Why the layers are physically separated, not just tagged.** Patterns are reorganized so all Primary structures appear first, then all Modifiers — a Strategist or Executor reading the file once internalizes the two-layer mental model from the table of contents alone. Numbers are stable identifiers (`#38` is still image-as-canvas + annotation cards regardless of where it sits in the file), so existing references across `spec_lock.md`, `design_spec.md §VIII`, executor logs, and historical examples all keep resolving.
+
+**Why composition flows through Strategist's resource list, not just Executor's improvisation.** The `Layout pattern` column in `§VIII Image Resource List` accepts a `#<id> + #<id> ...` expression — Primary id plus optional Modifier ids — so the composition is declared *before* SVG generation, audited by `svg_quality_checker`, and survives session re-entry. Pushing composition onto Executor alone would lose it on context compression in long decks; encoding it in the spec_lock-adjacent resource list makes it a piece of the design contract.
+
+**Why true hard constraints stay upstream.** Cross-cutting technical constraints (`<clipPath>` only on `<image>`, `fill-opacity` instead of `rgba()`, no `<mask>`, alpha-effect routing) live exclusively in [`shared-standards.md`](../skills/ppt-master/references/shared-standards.md). The layout patterns file points at them with one-line references rather than restating — so when a constraint relaxes (e.g., a new DrawingML feature becomes reliable), only one file changes, and a stale duplicate in patterns can't silently keep enforcing the old rule.
+
 ---
 
 ## SVG Constraints: Banned Features and Conditional Allowances
@@ -219,7 +242,8 @@ The post-processing stage produces four artifacts. Each one serves a workflow th
 | `svg_output/` | source of truth, manual editing, `update_spec.py`, `svg_quality_checker.py` | only directory whose contents are authored, not derived |
 | `svg_final/` | IDE inline preview (VSCode/Cursor open `.svg` directly), browser open of a single page | `.pptx` is not openable in IDEs; `svg_output/` won't render fully because of external icon / image refs |
 | `exports/<name>_<ts>.pptx` (native) | primary deliverable — editable in PowerPoint with DrawingML shapes | only artifact whose shapes the user can resize / recolor / restyle natively in PowerPoint |
-| `backup/<ts>/<name>_svg.pptx` (preview) | cross-platform single-file distribution, multi-page browse, email attachment | self-contained, multi-page, opens in PowerPoint / Keynote / WPS / LibreOffice; an `svg_final/` folder is harder to distribute |
+| `exports/<name>_<ts>_svg.pptx` (preview, opt-in via `--svg-snapshot`) | cross-platform single-file distribution, multi-page browse, email attachment | self-contained, multi-page, opens in PowerPoint / Keynote / WPS / LibreOffice; an `svg_final/` folder is harder to distribute. Off by default — live preview already provides the SVG visual reference for dev/diagnostic work |
+| `backup/<ts>/svg_output/` (always written in default-flow mode) | re-export from frozen SVG sources without re-running the LLM, archival | the only persisted copy of the Executor's raw SVG source after the project has been edited downstream |
 
 ### The `svg_finalize/` package has TWO consumers
 
@@ -272,4 +296,4 @@ The interesting design choice is the animation **anchor**, not the effect list.
 
 ## Standalone Workflows
 
-Five capabilities (`create-template`, `verify-charts`, `customize-animations`, `visual-edit`, `generate-audio`) live as standalone workflows rather than pipeline steps. Each is sparsely triggered — per-template, per-chart-deck, per-animation-tuning request, per-complaint, per-video-export — not per-deck. Folding any into the default pipeline would either run unnecessary steps for the majority of users (added latency and failure surface) or force a one-size-fits-all narrowing of the main flow. Keeping them opt-in lets the deck-generation pipeline stay tight and predictable while making the capability available when its trigger condition fires; each `workflows/<name>.md` is self-contained and loaded on demand, so paying the prompt-context cost is also opt-in.
+Six capabilities (`create-template`, `verify-charts`, `customize-animations`, `live-preview`, `generate-audio`, `visual-review`) live as standalone workflows rather than pipeline steps. Each is sparsely triggered — per-template, per-chart-deck, per-animation-tuning request, per-complaint, per-video-export, per explicit visual-review request — not per-deck. Folding any into the default pipeline would either run unnecessary steps for the majority of users (added latency and failure surface) or force a one-size-fits-all narrowing of the main flow. Keeping them opt-in lets the deck-generation pipeline stay tight and predictable while making the capability available when its trigger condition fires; each `workflows/<name>.md` is self-contained and loaded on demand, so paying the prompt-context cost is also opt-in.

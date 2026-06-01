@@ -38,7 +38,13 @@ AI 会把这个目录里的 SVG、`design_spec.md` 和素材复制到项目目�
 
 ### 现有模板一览
 
-完整索引见 [`templates/layouts/README.md`](../../skills/ppt-master/templates/layouts/README.md)，按"品牌 / 场景 / 政企 / 特殊"分类，每条都标注了主色和适用场景。当前共 17 套，覆盖 Google、Anthropic、招商银行、中国电建、中汽研、政府蓝/红、医学院、心理学、像素复古等。
+模板按三种身份分目录：
+
+- [`templates/brands/README.md`](../../skills/ppt-master/templates/brands/README.md) — 仅身份预设（color / typography / logo / voice / icon style），无 SVG 页面；Anthropic、Google
+- [`templates/layouts/README.md`](../../skills/ppt-master/templates/layouts/README.md) — 仅结构样板（canvas / page structure / page types / SVG roster），无身份；academic_defense、government_blue/red、ai_ops、medical_university、pixel_retro、psychology_attachment
+- [`templates/decks/README.md`](../../skills/ppt-master/templates/decks/README.md) — 完整 PPT 复刻（身份 + 结构 + 中间段）；招商银行、中国电建_*、中汽研_*、重庆大学、中国电信
+
+完整数据模型与三类的合成 / 冲突解决规则见 [`templates-architecture.md`](./templates-architecture.md)。
 
 ### 自由设计 vs 模板
 
@@ -57,7 +63,7 @@ AI 会把这个目录里的 SVG、`design_spec.md` 和素材复制到项目目�
 | 数值锁定 | 是 — 来源于模板的 `design_spec.md` | 否 — Strategist 现场推适合 deck 的具体值 |
 | 适用场景 | 品牌锁定的 deck；强视觉约定的场景 | 心里有感觉但没有具体品牌承诺 |
 
-风格描述可能看起来像模板名（比如 "Google 风" 听上去像 `google_style/` 模板目录），但走的是**两套机制**——模板需要你给一个真实可复制的路径，风格描述是解释性语言。字面接近，落地完全是两条路。
+风格描述可能看起来像模板名（比如 "学术风" 听上去像 `academic_defense/` 模板目录），但走的是**两套机制**——模板需要你给一个真实可复制的路径，风格描述是解释性语言。字面接近，落地完全是两条路。
 
 ### 常见风格描述
 
@@ -95,7 +101,7 @@ AI 会把这个目录里的 SVG、`design_spec.md` 和素材复制到项目目�
 | **孟菲斯/波普风** | 高饱和大色块、几何图形、80 年代 |
 | **赛博朋克/蒸汽波** | 霓虹紫粉、网格、迷幻 |
 
-你描述风格时，AI **不会基于这些词去挑模板**——它把这些词解释为对应的色彩 / 字体 / 版式建议，放到 Strategist 八项确认里 `d` 项的第二层（视觉风格），然后驱动 e/f/g/h（色彩 / 图标 / 字体 / 图片）。你可以确认或调整。如果你想要的风格刚好对上库里某个模板（如 `academic_defense` / `google_style` / `pixel_retro`），有两条路可选：把模板的目录路径发出来锁定值，或描述风格让 AI 现场推适配你内容的值。
+你描述风格时，AI **不会基于这些词去挑模板**——它把这些词解释为对应的色彩 / 字体 / 版式建议，放到 Strategist 八项确认里 `d` 项的第二层（视觉风格），然后驱动 e/f/g/h（色彩 / 图标 / 字体 / 图片）。你可以确认或调整。如果你想要的风格刚好对上库里某个模板（如 `academic_defense` / `pixel_retro` / `psychology_attachment`），有两条路可选：把模板的目录路径发出来锁定值，或描述风格让 AI 现场推适配你内容的值。
 
 ---
 
